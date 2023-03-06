@@ -2,9 +2,6 @@ library(shiny)
 library(tidyverse)
 
 uah <- read_csv("UAH-lower-troposphere-long.csv")
-uah_subset <- reactive({
-  uah %>% sample_n(input$uah)
-})
 
 ##UI
 ui <- fluidPage(
@@ -24,15 +21,16 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel("About",
-                 p("It allows users to explore the UAH lower troposphere dataset with different parameters."),
-                 tabPanelBody("panel1", "")),
+                 p(HTML("<strong>It allows users to explore the UAH lower troposphere dataset with different parameters.</strong>")),
+                 tabPanelBody("panel1", "This site under the tab 'Plot' shows a scatterplot on the temperatures, throughout the years. Under the 'Table' tab, the full dataset of the UAH lower troposphere.")),
         tabPanel("Plot", 
                  p("This is a plot showing the relationship between year and temperature."),
                  plotOutput("plot"), 
                  tabPanelBody("panel2", "")),
         tabPanel("Table", 
                  tableOutput("table"), 
-                 tabPanelBody("panel3", "This table shows the UAH dataset."))
+                 verbatimTextOutput("obs_count"),
+                 tabPanelBody("panel3", HTML("<em>End of dataset</em>")))
       )
     )
   )
@@ -50,6 +48,15 @@ server <- function(input, output) {
       slice(1:input$uah) %>% 
       group_by(nrow("year"))
   })
+  output$obs_count <- renderPrint({
+    var <- switch(input$x_axis, 
+                  "Year" = "year", 
+                  "Month" = "month", 
+                  "Day" = "day")
+    count <- nrow(uah %>% slice(1:input$uah) %>% filter(!is.na(!!sym(var))))
+    paste("Number of non-missing observations for", input$x_axis, ":", count)
+  })
 }
 
 shinyApp(ui = ui, server = server)
+
