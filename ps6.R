@@ -5,6 +5,8 @@ uah <- read_csv("UAH-lower-troposphere-long.csv")
 uah_subset <- reactive({
   uah %>% sample_n(input$uah)
 })
+
+##UI
 ui <- fluidPage(
   
   titlePanel("PS6"),
@@ -12,9 +14,9 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       sliderInput("uah", "UAH",
-                  min = 10,
-                  max = 1000,
-                  value = 200),
+                  min = 1,
+                  max = 14500,
+                  value = 4000),
       radioButtons("x_axis", "Select variable for x-axis:", 
                    choices = c("Year", "Month", "Day"))
     ),
@@ -28,8 +30,9 @@ ui <- fluidPage(
                  p("This is a plot showing the relationship between year and temperature."),
                  plotOutput("plot"), 
                  tabPanelBody("panel2", "")),
-        tabPanel("Table", tableOutput("table"), 
-                 tabPanelBody("panel3", "Panel 3 content"))
+        tabPanel("Table", 
+                 tableOutput("table"), 
+                 tabPanelBody("panel3", "This table shows the UAH dataset."))
       )
     )
   )
@@ -37,15 +40,15 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   output$plot <- renderPlot({
-    uah %>% 
-      sample_n(input$uah) %>% 
-      ggplot(aes(x = year, fill = temp)) +
-      geom_histogram(binwidth = 0.1) +
-      scale_fill_manual(values = input$color)
+    uah <- input$uah
+    x <- rnorm(uah)
+    y <- rnorm(uah)
+    plot(x, y, col="darkgreen", pch=19, xlab = "year", ylab = "temperature")
   })
   output$table <- renderTable({
     uah %>% 
-      slice(1:input$uah)
+      slice(1:input$uah) %>% 
+      group_by(nrow("year"))
   })
 }
 
