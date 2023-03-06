@@ -1,57 +1,52 @@
 library(shiny)
 library(tidyverse)
-#testing
+
+uah <- read_csv("UAH-lower-troposphere-long.csv")
+uah_subset <- reactive({
+  uah %>% sample_n(input$uah)
+})
 ui <- fluidPage(
   
   titlePanel("PS6"),
   
   sidebarLayout(
     sidebarPanel(
-      sliderInput("bins",
-                  "Number of bins:",
-                  min = 1,
-                  max = 50,
-                  value = 30),
-      sliderInput("n", "How many diamonds:",
+      sliderInput("uah", "UAH",
                   min = 10,
                   max = 1000,
                   value = 200),
-      radioButtons("color", "Choose color",
-                   choices = c("skyblue", "lawngreen", "orangered",
-                                        "purple", "gold"))
+      radioButtons("x_axis", "Select variable for x-axis:", 
+                   choices = c("Year", "Month", "Day"))
     ),
     
     mainPanel(
       tabsetPanel(
-        tabPanel("Plot", plotOutput("plot"), 
-                 tabPanelBody("panel2", "Panel 2 content")),
+        tabPanel("About",
+                 p("It allows users to explore the UAH lower troposphere dataset with different parameters."),
+                 tabPanelBody("panel1", "")),
+        tabPanel("Plot", 
+                 p("This is a plot showing the relationship between year and temperature."),
+                 plotOutput("plot"), 
+                 tabPanelBody("panel2", "")),
         tabPanel("Table", tableOutput("table"), 
-                 tabPanelBody("panel3", "Panel 3 content")),
-        tabPanel("About", plotOutput("about"), 
-                 tabPanelBody("panel1", "Panel 1 content"))
+                 tabPanelBody("panel3", "Panel 3 content"))
       )
     )
   )
 )
 
 server <- function(input, output) {
-  
   output$plot <- renderPlot({
-    diamonds %>% 
-      sample_n(input$n) %>% 
-      ggplot(aes(x = carat, fill = color)) +
+    uah %>% 
+      sample_n(input$uah) %>% 
+      ggplot(aes(x = year, fill = temp)) +
       geom_histogram(binwidth = 0.1) +
       scale_fill_manual(values = input$color)
   })
-  output$about <- renderPlot({
-    plot(cars)
-  })
   output$table <- renderTable({
-    iris %>% 
-      slice(1:input$n)
+    uah %>% 
+      slice(1:input$uah)
   })
-  
 }
 
 shinyApp(ui = ui, server = server)
-
